@@ -96,6 +96,7 @@ export enum MessageType {
   Pong = 'pong', /// bidirectional
 
   Subscribe = 'subscribe', // Client -> Server
+  SubscribeAck = 'subscribe_ack', // Server -> Client
   Next = 'next', // Server -> Client
   Error = 'error', // Server -> Client
   Complete = 'complete', // bidirectional
@@ -165,6 +166,12 @@ export interface ExecutionPatchResult<
 }
 
 /** @category Common */
+export interface SubscribeAckMessage {
+  readonly id: ID;
+  readonly type: MessageType.SubscribeAck;
+}
+
+/** @category Common */
 export interface NextMessage {
   readonly id: ID;
   readonly type: MessageType.Next;
@@ -196,6 +203,8 @@ export type Message<T extends MessageType = MessageType> =
     ? PongMessage
     : T extends MessageType.Subscribe
     ? SubscribeMessage
+    : T extends MessageType.SubscribeAck
+    ? SubscribeAckMessage
     : T extends MessageType.Next
     ? NextMessage
     : T extends MessageType.Error
@@ -251,6 +260,8 @@ export function isMessage(val: unknown): val is Message {
             val.payload.extensions === null ||
             hasOwnObjectProperty(val.payload, 'extensions'))
         );
+      case MessageType.SubscribeAck:
+        return hasOwnStringProperty(val, 'id');
       case MessageType.Next:
         return (
           hasOwnStringProperty(val, 'id') &&

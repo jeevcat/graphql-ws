@@ -439,6 +439,7 @@ export interface Client extends Disposable {
   subscribe<Data = Record<string, unknown>, Extensions = unknown>(
     payload: SubscribePayload,
     sink: Sink<ExecutionResult<Data, Extensions>>,
+    onAck?: () => void,
   ): () => void;
   /**
    * Terminates the WebSocket abruptly and immediately.
@@ -875,7 +876,7 @@ export function createClient<
 
   return {
     on: emitter.on,
-    subscribe(payload, sink) {
+    subscribe(payload, sink, onAck) {
       const id = generateID();
 
       let done = false,
@@ -911,6 +912,10 @@ export function createClient<
                 case MessageType.Complete: {
                   done = true;
                   releaser(); // release completes the sink
+                  return;
+                }
+                case MessageType.SubscribeAck: {
+                  onAck?.();
                   return;
                 }
               }
